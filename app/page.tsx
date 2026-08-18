@@ -1,15 +1,19 @@
 import Link from "next/link";
 import DishCard from "@/components/food/DishCard";
 import Button from "@/components/ui/Button";
-import { dishes } from "@/lib/data";
+import { getDishes } from "@/lib/dishes";
 
-export default function Home() {
+export default async function Home() {
+  const dishes = await getDishes();
+
   return (
     <div className="min-h-screen bg-[#faf9f6]">
       <main className="pb-24 md:pb-0">
+
         {/* Hero */}
         <section className="mx-auto max-w-7xl px-5 pb-20 pt-16 lg:px-8 lg:pb-28 lg:pt-24">
           <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+
             <div>
               <div className="mb-6 inline-flex rounded-full border border-[#ddd9d1] bg-white px-4 py-2 text-xs font-medium text-neutral-600">
                 Your food diary, reimagined
@@ -44,7 +48,9 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <p className="text-2xl font-bold">2.4k</p>
+                  <p className="text-2xl font-bold">
+                    {dishes.length}
+                  </p>
                   <p className="mt-1 text-xs text-neutral-500">
                     dishes
                   </p>
@@ -90,6 +96,7 @@ export default function Home() {
 
                 <div className="mt-3 flex items-center gap-2">
                   <span className="text-sm">★★★★★</span>
+
                   <span className="text-xs font-semibold">
                     4.5
                   </span>
@@ -102,6 +109,7 @@ export default function Home() {
         {/* Featured dishes */}
         <section className="border-y border-[#e7e4de] bg-white">
           <div className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
+
             <div className="mb-8 flex items-end justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-400">
@@ -124,24 +132,19 @@ export default function Home() {
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {dishes.map((dish) => (
                 <DishCard
-  key={dish.slug}
-  dish={{
-    id: dish.slug,
-    name: dish.name,
-    slug: dish.slug,
-    description: null,
-    cuisine: null,
-    image: dish.image,
-  }}
-/>
+                  key={dish.id}
+                  dish={dish}
+                />
               ))}
             </div>
+
           </div>
         </section>
 
         {/* Product statement */}
         <section className="mx-auto max-w-7xl px-5 py-24 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-3">
+
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-400">
                 Discover
@@ -186,8 +189,10 @@ export default function Home() {
                 culinary journey.
               </p>
             </div>
+
           </div>
         </section>
+
       </main>
     </div>
   );
