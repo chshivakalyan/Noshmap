@@ -123,7 +123,17 @@ export default function Home() {
 
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {dishes.map((dish) => (
-                <DishCard key={dish.slug} {...dish} />
+                <DishCard
+  key={dish.slug}
+  dish={{
+    id: dish.slug,
+    name: dish.name,
+    slug: dish.slug,
+    description: null,
+    cuisine: null,
+    image: dish.image,
+  }}
+/>
               ))}
             </div>
           </div>

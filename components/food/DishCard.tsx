@@ -1,54 +1,54 @@
 import Link from "next/link";
-import RatingStars from "./RatingStars";
 
 interface DishCardProps {
-  name: string;
-  restaurant: string;
-  location: string;
-  rating: number;
-  image: string;
-  slug: string;
+  dish: {
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    cuisine: string | null;
+    image: string | null;
+  };
 }
 
-export default function DishCard({
-  name,
-  restaurant,
-  location,
-  rating,
-  image,
-  slug,
-}: DishCardProps) {
+export default function DishCard({ dish }: DishCardProps) {
   return (
     <Link
-      href={`/dish/${slug}`}
-      className="group block overflow-hidden rounded-2xl border border-[#e7e4de] bg-white"
+      href={`/dish/${dish.slug}`}
+      className="group overflow-hidden rounded-2xl border border-neutral-200 bg-white transition hover:-translate-y-1 hover:shadow-md"
     >
-      <div className="relative aspect-[4/3] overflow-hidden bg-neutral-200">
+      {dish.image ? (
         <img
-          src={image}
-          alt={name}
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          src={dish.image}
+          alt={dish.name}
+          className="aspect-[4/3] w-full object-cover transition duration-300 group-hover:scale-[1.02]"
         />
-
-        <div className="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold backdrop-blur">
-          {rating.toFixed(1)}
+      ) : (
+        <div className="flex aspect-[4/3] items-center justify-center bg-neutral-100 text-sm text-neutral-400">
+          No image available
         </div>
-      </div>
+      )}
 
-      <div className="p-4">
-        <h3 className="text-lg font-bold tracking-tight">{name}</h3>
+      <div className="p-5">
+        {dish.cuisine && (
+          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-neutral-400">
+            {dish.cuisine}
+          </p>
+        )}
 
-        <p className="mt-1 text-sm text-neutral-500">
-          {restaurant}
+        <h3 className="mt-2 text-xl font-bold tracking-tight">
+          {dish.name}
+        </h3>
+
+        {dish.description && (
+          <p className="mt-2 line-clamp-2 text-sm leading-6 text-neutral-500">
+            {dish.description}
+          </p>
+        )}
+
+        <p className="mt-4 text-sm font-semibold">
+          View dish →
         </p>
-
-        <p className="mt-1 text-xs text-neutral-400">
-          {location}
-        </p>
-
-        <div className="mt-3">
-          <RatingStars rating={rating} />
-        </div>
       </div>
     </Link>
   );
