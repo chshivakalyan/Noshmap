@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import DishCard from "@/components/food/DishCard";
 import Button from "@/components/ui/Button";
 import { getDishes } from "@/lib/dishes";
@@ -9,11 +10,8 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-[#faf9f6]">
       <main className="pb-24 md:pb-0">
-
-        {/* Hero */}
         <section className="mx-auto max-w-7xl px-5 pb-20 pt-16 lg:px-8 lg:pb-28 lg:pt-24">
           <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
-
             <div>
               <div className="mb-6 inline-flex rounded-full border border-[#ddd9d1] bg-white px-4 py-2 text-xs font-medium text-neutral-600">
                 Your food diary, reimagined
@@ -65,12 +63,14 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* Hero visual */}
             <div className="relative">
               <div className="overflow-hidden rounded-[2rem]">
-                <img
+                <Image
                   src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1200&q=85"
                   alt="Beautifully plated food"
+                  width={1200}
+                  height={1500}
+                  priority
                   className="aspect-[4/5] w-full object-cover"
                 />
               </div>
@@ -106,10 +106,8 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* Featured dishes */}
         <section className="border-y border-[#e7e4de] bg-white">
           <div className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
-
             <div className="mb-8 flex items-end justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-400">
@@ -137,14 +135,11 @@ export default async function Home() {
                 />
               ))}
             </div>
-
           </div>
         </section>
 
-        {/* Product statement */}
         <section className="mx-auto max-w-7xl px-5 py-24 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-3">
-
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-400">
                 Discover
@@ -189,10 +184,8 @@ export default async function Home() {
                 culinary journey.
               </p>
             </div>
-
           </div>
         </section>
-
       </main>
     </div>
   );

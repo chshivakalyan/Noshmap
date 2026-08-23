@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
+// import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import DishCard from "@/components/food/DishCard";
 interface RestaurantPageProps {
