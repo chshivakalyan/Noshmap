@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
+import FollowButton from "@/components/profile/FollowButton";
 import ProfileStats from "@/components/profile/ProfileStats";
 import ProfileReviewCard from "@/components/profile/ProfileReviewCard";
 
@@ -32,6 +33,14 @@ export default async function PublicProfilePage({
   const supabase = await createClient();
 
   // ==================================================
+  // CURRENT USER
+  // ==================================================
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // ==================================================
   // PROFILE
   // ==================================================
 
@@ -52,9 +61,52 @@ export default async function PublicProfilePage({
     .single();
 
   if (profileError || !profile) {
-    console.error("PROFILE ERROR:", profileError);
+    console.error(
+      "PROFILE ERROR:",
+      profileError
+    );
+
     notFound();
   }
+
+  // ==================================================
+  // FOLLOW STATUS
+  // ==================================================
+
+  let isFollowing = false;
+
+  if (user && user.id !== profile.id) {
+    const { data: follow } = await supabase
+      .from("follows")
+      .select("follower_id")
+      .eq("follower_id", user.id)
+      .eq("following_id", profile.id)
+      .maybeSingle();
+
+    isFollowing = Boolean(follow);
+  }
+
+  // ==================================================
+  // FOLLOWER / FOLLOWING COUNTS
+  // ==================================================
+
+  const { count: followersCount } =
+    await supabase
+      .from("follows")
+      .select("*", {
+        count: "exact",
+        head: true,
+      })
+      .eq("following_id", profile.id);
+
+  const { count: followingCount } =
+    await supabase
+      .from("follows")
+      .select("*", {
+        count: "exact",
+        head: true,
+      })
+      .eq("follower_id", profile.id);
 
   // ==================================================
   // FOOD LOGS
@@ -139,13 +191,18 @@ export default async function PublicProfilePage({
   const restaurantsVisited =
     new Set(
       logs
-        .map((log) => log.restaurant_id)
+        .map(
+          (log) =>
+            log.restaurant_id
+        )
         .filter(Boolean)
     ).size;
 
   const cuisines = logs
     .map((log) => {
-      const dish = Array.isArray(log.dishes)
+      const dish = Array.isArray(
+        log.dishes
+      )
         ? log.dishes[0]
         : log.dishes;
 
@@ -169,10 +226,14 @@ export default async function PublicProfilePage({
     <main className="min-h-screen bg-[#faf9f6] px-5 py-12 pb-24">
       <div className="mx-auto max-w-5xl">
 
-        {/* PROFILE HEADER */}
+        {/* ==========================================
+            PROFILE HEADER
+        ========================================== */}
 
         <section className="rounded-3xl border border-neutral-200 bg-white p-6 sm:p-10">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+
+            {/* Avatar */}
 
             {profile.avatar ? (
               <img
@@ -188,34 +249,90 @@ export default async function PublicProfilePage({
               </div>
             )}
 
-            <div>
-              <p className="text-sm text-neutral-500">
-                @{profile.username}
-              </p>
+            {/* Profile information */}
 
-              <h1 className="mt-1 text-4xl font-black tracking-[-0.05em] sm:text-5xl">
-                {profile.display_name}
-              </h1>
+            <div className="flex-1">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+                <div>
+                  <p className="text-sm text-neutral-500">
+                    @{profile.username}
+                  </p>
+
+                  <h1 className="mt-1 text-4xl font-black tracking-[-0.05em] sm:text-5xl">
+                    {profile.display_name}
+                  </h1>
+                </div>
+
+                {/* Follow button */}
+
+                {user &&
+                  user.id !== profile.id && (
+                    <FollowButton
+                      profileId={profile.id}
+                      initialFollowing={
+                        isFollowing
+                      }
+                    />
+                  )}
+
+              </div>
+
+              {/* Bio */}
 
               {profile.bio && (
                 <p className="mt-3 max-w-xl text-sm leading-6 text-neutral-500">
                   {profile.bio}
                 </p>
               )}
+
+              {/* Followers / Following */}
+
+              <div className="mt-4 flex gap-6 text-sm">
+                <Link
+                  href={`/profile/${profile.username}/followers`}
+                  className="transition hover:opacity-60"
+                >
+                  <span className="font-bold">
+                    {followersCount ?? 0}
+                  </span>{" "}
+                  <span className="text-neutral-500">
+                    followers
+                  </span>
+                </Link>
+
+                <Link
+                  href={`/profile/${profile.username}/following`}
+                  className="transition hover:opacity-60"
+                >
+                  <span className="font-bold">
+                    {followingCount ?? 0}
+                  </span>{" "}
+                  <span className="text-neutral-500">
+                    following
+                  </span>
+                </Link>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* STATISTICS */}
+        {/* ==========================================
+            STATISTICS
+        ========================================== */}
 
         <ProfileStats
           totalMeals={totalMeals}
           averageRating={averageRating}
           cuisinesTried={cuisinesTried}
-          restaurantsVisited={restaurantsVisited}
+          restaurantsVisited={
+            restaurantsVisited
+          }
         />
 
-        {/* TABS */}
+        {/* ==========================================
+            TABS
+        ========================================== */}
 
         <nav className="mt-10 overflow-x-auto border-b border-neutral-200">
           <div className="flex min-w-max gap-8">
@@ -251,7 +368,9 @@ export default async function PublicProfilePage({
           </div>
         </nav>
 
-        {/* REVIEWS */}
+        {/* ==========================================
+            REVIEWS
+        ========================================== */}
 
         <section className="mt-8">
 
@@ -268,6 +387,8 @@ export default async function PublicProfilePage({
             </p>
           </div>
 
+          {/* Empty state */}
+
           {logs.length === 0 && (
             <div className="rounded-3xl border border-dashed border-neutral-300 bg-white p-10 text-center">
               <h3 className="font-bold">
@@ -275,43 +396,55 @@ export default async function PublicProfilePage({
               </h3>
 
               <p className="mt-2 text-sm text-neutral-500">
-                Food logs with reviews will appear
-                here.
+                Food logs with reviews will
+                appear here.
               </p>
             </div>
           )}
 
+          {/* Reviews */}
+
           {logsWithPhotoUrls.length > 0 && (
             <div className="grid gap-5 md:grid-cols-2">
-              {logsWithPhotoUrls.map((log) => (
-                <ProfileReviewCard
-                  key={log.id}
-                  log={{
-                    id: log.id,
-                    rating: Number(log.rating),
-                    review: log.review,
-                    eaten_at: log.eaten_at,
-                    photo: log.photo,
-                    photoUrl: log.photoUrl,
-                    dishes:
-                      log.dishes as
-                        | Dish
-                        | Dish[]
-                        | null,
-                    restaurants:
-                      log.restaurants as
-                        | Restaurant
-                        | Restaurant[]
-                        | null,
-                  }}
-                />
-              ))}
+              {logsWithPhotoUrls.map(
+                (log) => (
+                  <ProfileReviewCard
+                    key={log.id}
+                    log={{
+                      id: log.id,
+                      rating: Number(
+                        log.rating
+                      ),
+                      review:
+                        log.review,
+                      eaten_at:
+                        log.eaten_at,
+                      photo:
+                        log.photo,
+                      photoUrl:
+                        log.photoUrl,
+                      dishes:
+                        log.dishes as
+                          | Dish
+                          | Dish[]
+                          | null,
+                      restaurants:
+                        log.restaurants as
+                          | Restaurant
+                          | Restaurant[]
+                          | null,
+                    }}
+                  />
+                )
+              )}
             </div>
           )}
 
         </section>
 
-        {/* FOOD MAP PREVIEW */}
+        {/* ==========================================
+            FOOD MAP PREVIEW
+        ========================================== */}
 
         <section className="mt-8">
           <div className="rounded-3xl border border-neutral-200 bg-white p-6">
@@ -340,8 +473,8 @@ export default async function PublicProfilePage({
                 </p>
 
                 <p className="mt-1 text-xs text-neutral-400">
-                  Interactive map will be added in
-                  V9.
+                  Interactive map will be added
+                  in V9.
                 </p>
               </div>
             </div>
