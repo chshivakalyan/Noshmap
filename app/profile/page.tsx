@@ -17,9 +17,40 @@ export default async function ProfilePage() {
     .from("profiles")
     .select("username, display_name, avatar, bio, created_at")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
-  if (error || !profile) {
+  let loadedProfile = profile;
+
+  if (!loadedProfile && !error) {
+    const username =
+      typeof user.user_metadata?.username === "string"
+        ? user.user_metadata.username.trim()
+        : user.email?.split("@")[0] ?? `user-${user.id.slice(0, 8)}`;
+    const displayName =
+      typeof user.user_metadata?.display_name === "string"
+        ? user.user_metadata.display_name.trim()
+        : username;
+
+    const { data: createdProfile, error: createError } =
+      await supabase
+        .from("profiles")
+        .upsert(
+          {
+            id: user.id,
+            username,
+            display_name: displayName || username,
+          },
+          { onConflict: "id" }
+        )
+        .select("username, display_name, avatar, bio, created_at")
+        .single();
+
+    if (!createError) {
+      loadedProfile = createdProfile;
+    }
+  }
+
+  if (error || !loadedProfile) {
     return (
       <main className="mx-auto max-w-4xl px-5 py-20">
         <h1 className="text-3xl font-black">
@@ -38,16 +69,16 @@ export default async function ProfilePage() {
       <div className="flex items-start justify-between gap-6">
         <div>
           <p className="text-sm text-neutral-500">
-            @{profile.username}
+            @{loadedProfile.username}
           </p>
 
           <h1 className="mt-2 text-5xl font-black tracking-[-0.05em]">
-            {profile.display_name}
+            {loadedProfile.display_name}
           </h1>
 
-          {profile.bio && (
+          {loadedProfile.bio && (
             <p className="mt-4 max-w-xl text-neutral-500">
-              {profile.bio}
+              {loadedProfile.bio}
             </p>
           )}
         </div>
