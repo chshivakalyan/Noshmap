@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -31,7 +32,7 @@ export default async function PublicProfilePage({
   const supabase = await createClient();
 
   // ==================================================
-  // 1. LOAD PROFILE
+  // PROFILE
   // ==================================================
 
   const {
@@ -39,30 +40,24 @@ export default async function PublicProfilePage({
     error: profileError,
   } = await supabase
     .from("profiles")
-    .select(
-      `
-        id,
-        username,
-        display_name,
-        avatar,
-        bio,
-        created_at
-      `
-    )
+    .select(`
+      id,
+      username,
+      display_name,
+      avatar,
+      bio,
+      created_at
+    `)
     .eq("username", username)
     .single();
 
   if (profileError || !profile) {
-    console.error(
-      "PROFILE ERROR:",
-      profileError
-    );
-
+    console.error("PROFILE ERROR:", profileError);
     notFound();
   }
 
   // ==================================================
-  // 2. LOAD FOOD LOGS
+  // FOOD LOGS
   // ==================================================
 
   const {
@@ -70,29 +65,27 @@ export default async function PublicProfilePage({
     error: foodLogsError,
   } = await supabase
     .from("food_logs")
-    .select(
-      `
-        id,
-        rating,
-        review,
-        photo,
-        eaten_at,
-        restaurant_id,
+    .select(`
+      id,
+      rating,
+      review,
+      photo,
+      eaten_at,
+      restaurant_id,
 
-        dishes (
-          name,
-          slug,
-          image,
-          cuisine
-        ),
+      dishes (
+        name,
+        slug,
+        image,
+        cuisine
+      ),
 
-        restaurants (
-          name,
-          slug,
-          city
-        )
-      `
-    )
+      restaurants (
+        name,
+        slug,
+        city
+      )
+    `)
     .eq("user_id", profile.id)
     .order("eaten_at", {
       ascending: false,
@@ -108,39 +101,31 @@ export default async function PublicProfilePage({
   const logs = foodLogs ?? [];
 
   // ==================================================
-  // 3. CREATE PUBLIC PHOTO URLS
+  // PUBLIC PHOTO URLS
   // ==================================================
 
-  const logsWithPhotoUrls =
-    logs.map((log) => {
-      let photoUrl: string | null = null;
+  const logsWithPhotoUrls = logs.map((log) => {
+    let photoUrl: string | null = null;
 
-      if (log.photo) {
-        const {
-          data: publicUrlData,
-        } = supabase.storage
-          .from("food-photos")
-          .getPublicUrl(log.photo);
+    if (log.photo) {
+      const { data } = supabase.storage
+        .from("food-photos")
+        .getPublicUrl(log.photo);
 
-        photoUrl =
-          publicUrlData.publicUrl;
-      }
+      photoUrl = data.publicUrl;
+    }
 
-      return {
-        ...log,
-        photoUrl,
-      };
-    });
+    return {
+      ...log,
+      photoUrl,
+    };
+  });
 
   // ==================================================
-  // 4. TOTAL MEALS
+  // STATISTICS
   // ==================================================
 
   const totalMeals = logs.length;
-
-  // ==================================================
-  // 5. AVERAGE RATING
-  // ==================================================
 
   const averageRating =
     totalMeals > 0
@@ -151,29 +136,16 @@ export default async function PublicProfilePage({
         ) / totalMeals
       : 0;
 
-  // ==================================================
-  // 6. RESTAURANTS VISITED
-  // ==================================================
-
   const restaurantsVisited =
     new Set(
       logs
-        .map(
-          (log) =>
-            log.restaurant_id
-        )
+        .map((log) => log.restaurant_id)
         .filter(Boolean)
     ).size;
 
-  // ==================================================
-  // 7. CUISINES TRIED
-  // ==================================================
-
   const cuisines = logs
     .map((log) => {
-      const dish = Array.isArray(
-        log.dishes
-      )
+      const dish = Array.isArray(log.dishes)
         ? log.dishes[0]
         : log.dishes;
 
@@ -190,21 +162,17 @@ export default async function PublicProfilePage({
     new Set(cuisines).size;
 
   // ==================================================
-  // 8. RENDER
+  // PAGE
   // ==================================================
 
   return (
     <main className="min-h-screen bg-[#faf9f6] px-5 py-12 pb-24">
       <div className="mx-auto max-w-5xl">
 
-        {/* ============================================
-            PROFILE HEADER
-        ============================================ */}
+        {/* PROFILE HEADER */}
 
         <section className="rounded-3xl border border-neutral-200 bg-white p-6 sm:p-10">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-
-            {/* Avatar */}
 
             {profile.avatar ? (
               <img
@@ -219,8 +187,6 @@ export default async function PublicProfilePage({
                   .toUpperCase()}
               </div>
             )}
-
-            {/* Profile information */}
 
             <div>
               <p className="text-sm text-neutral-500">
@@ -240,60 +206,52 @@ export default async function PublicProfilePage({
           </div>
         </section>
 
-        {/* ============================================
-            STATISTICS
-        ============================================ */}
+        {/* STATISTICS */}
 
         <ProfileStats
           totalMeals={totalMeals}
           averageRating={averageRating}
           cuisinesTried={cuisinesTried}
-          restaurantsVisited={
-            restaurantsVisited
-          }
+          restaurantsVisited={restaurantsVisited}
         />
 
-        {/* ============================================
-            TABS
-        ============================================ */}
+        {/* TABS */}
 
         <nav className="mt-10 overflow-x-auto border-b border-neutral-200">
           <div className="flex min-w-max gap-8">
 
-            <button
-              type="button"
+            <Link
+              href={`/profile/${profile.username}`}
               className="border-b-2 border-black px-1 py-4 text-sm font-semibold"
             >
               Reviews
-            </button>
+            </Link>
 
-            <button
-              type="button"
-              className="border-b-2 border-transparent px-1 py-4 text-sm font-semibold text-neutral-400"
+            <Link
+              href={`/profile/${profile.username}/diary`}
+              className="border-b-2 border-transparent px-1 py-4 text-sm font-semibold text-neutral-400 hover:text-black"
             >
               Diary
-            </button>
+            </Link>
 
-            <button
-              type="button"
-              className="border-b-2 border-transparent px-1 py-4 text-sm font-semibold text-neutral-400"
+            <Link
+              href={`/profile/${profile.username}/lists`}
+              className="border-b-2 border-transparent px-1 py-4 text-sm font-semibold text-neutral-400 hover:text-black"
             >
               Lists
-            </button>
+            </Link>
 
-            <button
-              type="button"
-              className="border-b-2 border-transparent px-1 py-4 text-sm font-semibold text-neutral-400"
+            <Link
+              href={`/profile/${profile.username}/favorites`}
+              className="border-b-2 border-transparent px-1 py-4 text-sm font-semibold text-neutral-400 hover:text-black"
             >
               Favorites
-            </button>
+            </Link>
 
           </div>
         </nav>
 
-        {/* ============================================
-            REVIEWS
-        ============================================ */}
+        {/* REVIEWS */}
 
         <section className="mt-8">
 
@@ -310,8 +268,6 @@ export default async function PublicProfilePage({
             </p>
           </div>
 
-          {/* Empty state */}
-
           {logs.length === 0 && (
             <div className="rounded-3xl border border-dashed border-neutral-300 bg-white p-10 text-center">
               <h3 className="font-bold">
@@ -319,76 +275,75 @@ export default async function PublicProfilePage({
               </h3>
 
               <p className="mt-2 text-sm text-neutral-500">
-                Food logs with reviews will
-                appear here.
+                Food logs with reviews will appear
+                here.
               </p>
             </div>
           )}
 
-          {/* Reviews */}
-
-          {logsWithPhotoUrls.length >
-            0 && (
+          {logsWithPhotoUrls.length > 0 && (
             <div className="grid gap-5 md:grid-cols-2">
-              {logsWithPhotoUrls.map(
-                (log) => (
-                  <ProfileReviewCard
-                    key={log.id}
-                    log={{
-                      id: log.id,
-                      rating: Number(
-                        log.rating
-                      ),
-                      review:
-                        log.review,
-                      eaten_at:
-                        log.eaten_at,
-                      photo:
-                        log.photo,
-                      photoUrl:
-                        log.photoUrl,
-
-                      dishes:
-                        log.dishes as
-                          | Dish
-                          | Dish[]
-                          | null,
-
-                      restaurants:
-                        log.restaurants as
-                          | Restaurant
-                          | Restaurant[]
-                          | null,
-                    }}
-                  />
-                )
-              )}
+              {logsWithPhotoUrls.map((log) => (
+                <ProfileReviewCard
+                  key={log.id}
+                  log={{
+                    id: log.id,
+                    rating: Number(log.rating),
+                    review: log.review,
+                    eaten_at: log.eaten_at,
+                    photo: log.photo,
+                    photoUrl: log.photoUrl,
+                    dishes:
+                      log.dishes as
+                        | Dish
+                        | Dish[]
+                        | null,
+                    restaurants:
+                      log.restaurants as
+                        | Restaurant
+                        | Restaurant[]
+                        | null,
+                  }}
+                />
+              ))}
             </div>
           )}
 
         </section>
 
-        {/* ============================================
-            FOOD MAP PREVIEW
-        ============================================ */}
+        {/* FOOD MAP PREVIEW */}
 
         <section className="mt-8">
           <div className="rounded-3xl border border-neutral-200 bg-white p-6">
 
-            <h2 className="text-xl font-bold">
-              Food map
-            </h2>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold">
+                  Food map
+                </h2>
 
-            <p className="mt-2 text-sm text-neutral-500">
-              A map of this user&apos;s
-              food journey will appear
-              here.
-            </p>
+                <p className="mt-2 text-sm text-neutral-500">
+                  Explore this user&apos;s food
+                  journey.
+                </p>
+              </div>
+
+              <span className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-semibold text-neutral-500">
+                V9
+              </span>
+            </div>
 
             <div className="mt-5 flex h-56 items-center justify-center rounded-2xl bg-neutral-100">
-              <span className="text-sm text-neutral-400">
-                Map coming in V9
-              </span>
+              <div className="text-center">
+                <p className="font-semibold text-neutral-600">
+                  Food map coming soon
+                </p>
+
+                <p className="mt-1 text-xs text-neutral-400">
+                  Interactive map will be added in
+                  V9.
+                </p>
+              </div>
             </div>
 
           </div>
