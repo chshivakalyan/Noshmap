@@ -3,7 +3,18 @@ import DiscoverSearch from "@/components/discover/DiscoverSearch";
 import { getDishes } from "@/lib/dishes";
 import { getTrendingDishes } from "@/lib/discover";
 
-export default async function DiscoverPage() {
+type DiscoverPageProps = {
+  searchParams: Promise<{
+    list?: string;
+  }>;
+};
+
+export default async function DiscoverPage({
+  searchParams,
+}: DiscoverPageProps) {
+  const { list: listId } =
+    await searchParams;
+
   const [dishes, trendingDishes] =
     await Promise.all([
       getDishes(),
@@ -28,6 +39,21 @@ export default async function DiscoverPage() {
           Explore dishes worth remembering and
           discover your next favorite meal.
         </p>
+
+        {/* List mode */}
+
+        {listId && (
+          <div className="mt-6 rounded-2xl border border-neutral-200 bg-white px-5 py-4">
+            <p className="text-sm font-semibold">
+              Adding dishes to your list
+            </p>
+
+            <p className="mt-1 text-xs text-neutral-500">
+              Select a dish below to add it to
+              your list.
+            </p>
+          </div>
+        )}
       </section>
 
       {/* Search */}
@@ -56,6 +82,7 @@ export default async function DiscoverPage() {
               <DishCard
                 key={dish.id}
                 dish={dish}
+                listId={listId}
               />
             ))}
           </div>
@@ -83,6 +110,7 @@ export default async function DiscoverPage() {
               <DishCard
                 key={dish.id}
                 dish={dish}
+                listId={listId}
               />
             ))}
           </div>
