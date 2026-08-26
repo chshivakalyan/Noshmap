@@ -1,7 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
+
 import RatingStars from "@/components/food/RatingStars";
 import LikeButton from "@/components/social/LikeButton";
+import Comments from "@/components/food/Comments";
+
 import { createClient } from "@/lib/supabase/server";
 
 type Dish = {
@@ -25,7 +28,10 @@ type ProfileReviewCardProps = {
     photo: string | null;
     photoUrl: string | null;
     dishes: Dish | Dish[] | null;
-    restaurants: Restaurant | Restaurant[] | null;
+    restaurants:
+      | Restaurant
+      | Restaurant[]
+      | null;
   };
 };
 
@@ -38,7 +44,9 @@ export default async function ProfileReviewCard({
     ? log.dishes[0]
     : log.dishes;
 
-  const restaurant = Array.isArray(log.restaurants)
+  const restaurant = Array.isArray(
+    log.restaurants
+  )
     ? log.restaurants[0]
     : log.restaurants;
 
@@ -54,13 +62,17 @@ export default async function ProfileReviewCard({
   // LIKE COUNT
   // ==================================================
 
-  const { count: likeCount } = await supabase
-    .from("likes")
-    .select("*", {
-      count: "exact",
-      head: true,
-    })
-    .eq("food_log_id", log.id);
+  const { count: likeCount } =
+    await supabase
+      .from("likes")
+      .select("*", {
+        count: "exact",
+        head: true,
+      })
+      .eq(
+        "food_log_id",
+        log.id
+      );
 
   // ==================================================
   // CURRENT USER LIKE STATUS
@@ -69,14 +81,22 @@ export default async function ProfileReviewCard({
   let initialLiked = false;
 
   if (user) {
-    const { data: like } = await supabase
-      .from("likes")
-      .select("user_id")
-      .eq("user_id", user.id)
-      .eq("food_log_id", log.id)
-      .maybeSingle();
+    const { data: like } =
+      await supabase
+        .from("likes")
+        .select("user_id")
+        .eq(
+          "user_id",
+          user.id
+        )
+        .eq(
+          "food_log_id",
+          log.id
+        )
+        .maybeSingle();
 
-    initialLiked = Boolean(like);
+    initialLiked =
+      Boolean(like);
   }
 
   // ==================================================
@@ -94,7 +114,10 @@ export default async function ProfileReviewCard({
         <div className="relative h-64 w-full">
           <Image
             src={log.photoUrl}
-            alt={dish?.name ?? "Food"}
+            alt={
+              dish?.name ??
+              "Food"
+            }
             fill
             sizes="(max-width: 768px) 100vw, 50vw"
             className="object-cover"
@@ -145,7 +168,9 @@ export default async function ProfileReviewCard({
 
           <div className="shrink-0">
             <RatingStars
-              rating={Number(log.rating)}
+              rating={Number(
+                log.rating
+              )}
             />
           </div>
 
@@ -168,11 +193,14 @@ export default async function ProfileReviewCard({
         <p className="mt-5 text-xs text-neutral-400">
           {new Date(
             log.eaten_at
-          ).toLocaleDateString("en-IN", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })}
+          ).toLocaleDateString(
+            "en-IN",
+            {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            }
+          )}
         </p>
 
         {/* ==========================================
@@ -183,11 +211,23 @@ export default async function ProfileReviewCard({
           <div className="mt-5 border-t border-neutral-100 pt-4">
             <LikeButton
               foodLogId={log.id}
-              initialLiked={initialLiked}
-              initialCount={likeCount ?? 0}
+              initialLiked={
+                initialLiked
+              }
+              initialCount={
+                likeCount ?? 0
+              }
             />
           </div>
         )}
+
+        {/* ==========================================
+            COMMENTS
+        ========================================== */}
+
+        <Comments
+          foodLogId={log.id}
+        />
 
       </div>
     </article>
